@@ -14,6 +14,9 @@ def open_links():
     # 获取输入文本
     input_text = asin_input.get("1.0", tk.END).strip()
     
+    # 获取OE prefix
+    oe_prefix = prefix_var.get().strip()
+    
     # 判断分隔符是换行符还是逗号
     if '\n' in input_text:
         items = input_text.split('\n')
@@ -85,13 +88,15 @@ def open_links():
                 url = f'{ebay_prefix[selected_site]["base"]}/itm/{item}'
             else:
                 # 如果是 OE
+                # 如果有OE prefix，则拼接
+                search_item = f"{oe_prefix} {item}" if oe_prefix else item
                 if platform == "亚马逊":
-                    url = f'{site_prefix[selected_site]}/s?k={item}&i=automotive'
+                    url = f'{site_prefix[selected_site]}/s?k={search_item}&i=automotive'
                 else:
                     if selected_site in ebay_prefix:
-                        url = f'{ebay_prefix[selected_site]["base"]}{ebay_prefix[selected_site]["search"].format(query=item)}'
+                        url = f'{ebay_prefix[selected_site]["base"]}{ebay_prefix[selected_site]["search"].format(query=search_item)}'
                     else:
-                        url = f'{site_prefix[selected_site]}/s?k={item}&i=automotive'
+                        url = f'{site_prefix[selected_site]}/s?k={search_item}&i=automotive'
             webbrowser.open(url)
             root.update()  # 更新 GUI
 
@@ -206,6 +211,13 @@ site_label = tk.Label(root, text="选择站点:")
 site_label.pack()
 site_menu = ttk.Combobox(root, textvariable=site_var, values=["英国", "德国", "意大利", "法国", "西班牙"])
 site_menu.pack(pady=5)
+
+# 创建OE prefix输入框
+prefix_var = tk.StringVar()
+prefix_label = tk.Label(root, text="OE前缀(可选):")
+prefix_label.pack()
+prefix_entry = tk.Entry(root, textvariable=prefix_var, width=20)
+prefix_entry.pack(pady=5)
 
 # 创建按钮
 open_button = tk.Button(root, text="打开链接", command=lambda: threading.Thread(target=open_links).start())
