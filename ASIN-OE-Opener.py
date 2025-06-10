@@ -109,7 +109,10 @@ def open_links():
                 and selected_site in ebay_prefix
                 and platform == "Ebay"
             ):
-                url = f'{ebay_prefix[selected_site]["base"]}/itm/{item}'
+                if desc_only_var.get():
+                    url = f'https://itm.ebaydesc.com/itmdesc/{item}'
+                else:
+                    url = f'{ebay_prefix[selected_site]["base"]}/itm/{item}'
             else:
                 search_item = f"{oe_prefix} {item}" if oe_prefix else item
                 if platform == "亚马逊":
@@ -129,6 +132,7 @@ def stop_opening_links(event=None):
     global stop_opening
     stop_opening = True
     messagebox.showinfo("停止", "已停止打开网页。")
+
 
 # 创建主窗口
 root = tk.Tk()
@@ -160,6 +164,11 @@ prefix_label = tk.Label(root, text="OE前缀(可选):")
 prefix_label.pack()
 prefix_entry = tk.Entry(root, textvariable=prefix_var, width=20)
 prefix_entry.pack(pady=5)
+
+# 创建只打开描述页勾选框
+desc_only_var = tk.BooleanVar()
+desc_only_check = tk.Checkbutton(root, text="只打开描述页", variable=desc_only_var)
+desc_only_check.pack(pady=5)
 
 # 创建按钮
 open_button = tk.Button(
