@@ -7,6 +7,9 @@ import time
 # 全局变量，用于控制是否停止打开网页
 stop_opening = False
 
+# 全局变量，分隔符映射
+splitter_dic = {"换行符": "\n", "制表符": "\t", ",": ",", "@": "@", ";": ";"}
+
 
 def open_links():
     global stop_opening
@@ -18,19 +21,22 @@ def open_links():
     # 获取OE prefix
     oe_prefix = prefix_var.get().strip()
 
-    # 判断分隔符是换行符还是逗号
-    if "\n" in input_text:
-        items = input_text.split("\n")
+    # 获取和判断分隔符
+    splitter = splitter_var.get()
+    if splitter == "自动":
+        for k in splitter_dic.keys():
+            if splitter_dic[k] in input_text:
+                items = input_text.split(splitter_dic[k])
     else:
-        items = input_text.split(",")
+        items = input_text.split(splitter_dic[splitter])
 
     # 去除空白项并去除前后空白字符
     items = [item.strip() for item in items if item.strip()]
 
     print(f"items: {items}")
 
-    if len(items) > 10:
-        messagebox.showwarning("注意", "输入的 ASIN/OE 数量超过 10 个！可能造成卡顿")
+    if len(items) > 15:
+        messagebox.showwarning("注意", "输入的 ASIN/OE 数量超过 15 个！可能造成卡顿")
 
     # 获取选择的站点
     default_site = site_var.get()
@@ -110,7 +116,7 @@ def open_links():
                 and platform == "Ebay"
             ):
                 if desc_only_var.get():
-                    url = f'https://itm.ebaydesc.com/itmdesc/{item}'
+                    url = f"https://itm.ebaydesc.com/itmdesc/{item}"
                 else:
                     url = f'{ebay_prefix[selected_site]["base"]}/itm/{item}'
             else:
@@ -157,6 +163,15 @@ site_menu = ttk.Combobox(
     root, textvariable=site_var, values=["英国", "德国", "意大利", "法国", "西班牙"]
 )
 site_menu.pack(pady=5)
+
+# 创建分隔符下拉菜单
+splitter_var = tk.StringVar(value="自动")
+splitter_label = tk.Label(root, text="选择分隔符:")
+splitter_label.pack()
+splitter_menu = ttk.Combobox(
+    root, textvariable=splitter_var, values=["换行符", "制表符", ",", "@", ";"]
+)
+splitter_menu.pack(pady=5)
 
 # 创建OE prefix输入框
 prefix_var = tk.StringVar()
