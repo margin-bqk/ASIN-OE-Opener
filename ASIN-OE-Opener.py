@@ -24,6 +24,7 @@ def open_links():
     # 获取和判断分隔符
     splitter = splitter_var.get()
     splitter_flag = False
+    items = []
     if splitter == "自动":
         for k in splitter_dic.keys():
             if splitter_dic[k] in input_text:
@@ -31,8 +32,7 @@ def open_links():
                 splitter_flag = True
                 break
         if splitter_flag == False:
-            items = []
-            items = items.append(input_text)
+            items.append(input_text)
     else:
         items = input_text.split(splitter_dic[splitter])
 
