@@ -31,7 +31,8 @@ def open_links():
                 splitter_flag = True
                 break
         if splitter_flag == False:
-            items = input_text
+            items = []
+            items = items.append(input_text)
     else:
         items = input_text.split(splitter_dic[splitter])
 
