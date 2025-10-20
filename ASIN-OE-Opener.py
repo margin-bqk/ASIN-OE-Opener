@@ -23,11 +23,15 @@ def open_links():
 
     # 获取和判断分隔符
     splitter = splitter_var.get()
+    splitter_flag = False
     if splitter == "自动":
         for k in splitter_dic.keys():
             if splitter_dic[k] in input_text:
                 items = input_text.split(splitter_dic[k])
+                splitter_flag = True
                 break
+        if splitter_flag == False:
+            items = input_text
     else:
         items = input_text.split(splitter_dic[splitter])
 
