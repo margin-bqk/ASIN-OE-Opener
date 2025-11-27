@@ -150,8 +150,43 @@ def stop_opening_links(event=None):
 root = tk.Tk()
 root.title("ASIN/OE 链接打开工具")
 
+place_holder_text = "OE和关键词填在这里！>:("
+input_color = "black"
+
+
+class PlaceHolderText(tk.Text):
+
+    def __init__(self, master=None, placeholder_text="", input_color="grey", **kwargs):
+        self.placeholder_text = placeholder_text
+        self.input_color = input_color
+        super().__init__(master, **kwargs)
+        self.put_place_holder()
+        self.bind("<FocusIn>", self.handle_focus_in)
+        self.bind("<FocusOut>", self.handle_focus_out)
+
+    def put_place_holder(self):
+        self.delete("1.0", tk.END)
+        self.insert("1.0", self.placeholder_text)
+        self.config(fg="grey")
+
+    def handle_focus_in(self, event):
+        current_text = self.get("1.0", tk.END).strip()
+        if current_text == self.placeholder_text:
+            self.delete("1.0", tk.END)
+            self.config(fg=input_color)
+
+    def handle_focus_out(self, event):
+        current_text = self.get("1.0", tk.END).strip()
+        if current_text == "":
+            self.delete("1.0", tk.END)
+            self.insert("1.0", self.placeholder_text)
+            self.config(fg="grey")
+
+
 # 创建输入框
-asin_input = tk.Text(root, height=10, width=50)
+asin_input = PlaceHolderText(
+    root, height=10, width=50, placeholder_text=place_holder_text
+)
 asin_input.pack(pady=10)
 
 # 创建平台选择下拉菜单
@@ -181,7 +216,7 @@ splitter_menu.pack(pady=5)
 
 # 创建OE prefix输入框
 prefix_var = tk.StringVar()
-prefix_label = tk.Label(root, text="OE前缀(可选):")
+prefix_label = tk.Label(root, text="前缀(可选):")
 prefix_label.pack()
 prefix_entry = tk.Entry(root, textvariable=prefix_var, width=20)
 prefix_entry.pack(pady=5)
