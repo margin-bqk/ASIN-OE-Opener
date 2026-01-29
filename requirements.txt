@@ -1,0 +1,12 @@
+# ASIN-OE-Opener 依赖
+# 标准库依赖（无需安装）：
+# - tkinter
+# - webbrowser
+# - threading
+# - time
+
+# 构建工具
+pyinstaller>=6.0.0
+
+# 可选：如果需要 UPX 压缩
+# upx>=4.0.0
