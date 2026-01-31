@@ -48,13 +48,29 @@ jobs:
         
         echo "✅ Universal binary built successfully"
         
+        # 调试：列出dist目录内容
+        echo "Contents of dist directory after first build:"
+        ls -la dist/
+        
         # 保存单文件可执行文件到临时位置
         mkdir -p temp_build
-        cp dist/ASIN-OE-Opener temp_build/
+        if [ -f "dist/ASIN-OE-Opener" ]; then
+          echo "Copying single file executable to temp_build/"
+          cp dist/ASIN-OE-Opener temp_build/
+        else
+          echo "❌ Single file executable not found in dist/"
+          echo "Looking for alternative files..."
+          find dist/ -type f -name "ASIN-OE-Opener*"
+          exit 1
+        fi
     
     - name: Build .app Bundle
       run: |
         echo "Building .app bundle..."
+        
+        # 调试：列出构建前的dist目录内容
+        echo "Contents of dist directory before second build:"
+        ls -la dist/
         
         # 构建 .app 应用程序包
         pyinstaller \
@@ -68,8 +84,24 @@ jobs:
         
         echo "✅ .app bundle built successfully"
         
+        # 调试：列出构建后的dist目录内容
+        echo "Contents of dist directory after second build:"
+        ls -la dist/
+        
         # 恢复单文件可执行文件
-        cp temp_build/ASIN-OE-Opener dist/
+        echo "Restoring single file executable from temp_build/"
+        if [ -f "temp_build/ASIN-OE-Opener" ]; then
+          # 如果dist/ASIN-OE-Opener是目录，先删除它
+          if [ -d "dist/ASIN-OE-Opener" ]; then
+            echo "Removing directory dist/ASIN-OE-Opener"
+            rm -rf dist/ASIN-OE-Opener
+          fi
+          cp temp_build/ASIN-OE-Opener dist/
+          echo "✅ Single file executable restored"
+        else
+          echo "❌ No single file executable found in temp_build/"
+          exit 1
+        fi
     
     - name: Verify builds
       run: |
