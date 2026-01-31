@@ -1,0 +1,352 @@
+name: Build and Release Multi-Platform Application
+
+on:
+  push:
+    tags:
+      - 'v*'  # 当推送版本标签时触发，例如 v1.0.0
+  workflow_dispatch:  # 允许手动触发
+    inputs:
+      version:
+        description: '版本号'
+        required: true
+        default: '1.0.0'
+
+jobs:
+  build-macos:
+    name: Build macOS Application
+    runs-on: macos-latest  # 使用最新的 macOS 运行器（支持 Apple Silicon）
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'  # 使用稳定的 Python 版本
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build Universal Binary (Intel + Apple Silicon)
+      run: |
+        echo "Building universal binary for macOS..."
+        
+        # 构建单文件可执行文件（通用二进制）
+        pyinstaller \
+          --name="ASIN-OE-Opener" \
+          --windowed \
+          --onefile \
+          --clean \
+          --noconfirm \
+          --target-arch=universal2 \
+          --osx-bundle-identifier="com.asin.oe.opener" \
+          ASIN-OE-Opener.py
+        
+        echo "✅ Universal binary built successfully"
+    
+    - name: Build .app Bundle
+      run: |
+        echo "Building .app bundle..."
+        
+        # 构建 .app 应用程序包
+        pyinstaller \
+          --name="ASIN-OE-Opener" \
+          --windowed \
+          --clean \
+          --noconfirm \
+          --target-arch=universal2 \
+          --osx-bundle-identifier="com.asin.oe.opener" \
+          ASIN-OE-Opener.py
+        
+        echo "✅ .app bundle built successfully"
+    
+    - name: Verify builds
+      run: |
+        echo "Verifying builds..."
+        
+        # 检查单文件可执行文件
+        if [ -f "dist/ASIN-OE-Opener" ]; then
+          echo "✅ Single file executable: dist/ASIN-OE-Opener"
+          file dist/ASIN-OE-Opener
+          chmod +x dist/ASIN-OE-Opener
+        else
+          echo "❌ Single file executable not found"
+          exit 1
+        fi
+        
+        # 检查 .app 包
+        if [ -d "dist/ASIN-OE-Opener.app" ]; then
+          echo "✅ .app bundle: dist/ASIN-OE-Opener.app"
+          ls -la dist/ASIN-OE-Opener.app/
+        else
+          echo "❌ .app bundle not found"
+          exit 1
+        fi
+    
+    - name: Package artifacts
+      run: |
+        echo "Packaging artifacts..."
+        
+        # 创建发布目录
+        mkdir -p release/macos
+        
+        # 复制单文件可执行文件
+        cp dist/ASIN-OE-Opener release/macos/
+        
+        # 压缩 .app 包
+        ditto -c -k --sequesterRsrc --keepParent dist/ASIN-OE-Opener.app release/macos/ASIN-OE-Opener.app.zip
+        
+        # 创建 DMG 安装包（可选）
+        echo "Creating DMG package..."
+        hdiutil create -volname "ASIN-OE-Opener" -srcfolder dist/ASIN-OE-Opener.app -ov -format UDZO release/macos/ASIN-OE-Opener.dmg
+        
+        # 列出发布文件
+        echo "Release files:"
+        ls -lh release/macos/
+    
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: asin-oe-opener-macos
+        path: release/macos/
+        retention-days: 7
+
+  build-windows:
+    name: Build Windows Application
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build Windows Executable
+      run: |
+        echo "Building Windows executable..."
+        
+        # 构建单文件可执行文件 (.exe)
+        pyinstaller `
+          --name="ASIN-OE-Opener" `
+          --windowed `
+          --onefile `
+          --clean `
+          --noconfirm `
+          --icon=NONE `
+          ASIN-OE-Opener.py
+        
+        echo "✅ Windows executable built successfully"
+    
+    - name: Verify Windows build
+      run: |
+        echo "Verifying Windows build..."
+        
+        if (Test-Path "dist\ASIN-OE-Opener.exe") {
+          echo "✅ Windows executable: dist\ASIN-OE-Opener.exe"
+          Get-Item "dist\ASIN-OE-Opener.exe"
+        } else {
+          echo "❌ Windows executable not found"
+          exit 1
+        }
+    
+    - name: Package Windows artifacts
+      run: |
+        echo "Packaging Windows artifacts..."
+        
+        # 创建发布目录
+        New-Item -ItemType Directory -Force -Path release\windows
+        
+        # 复制可执行文件
+        Copy-Item "dist\ASIN-OE-Opener.exe" "release\windows\"
+        
+        # 创建ZIP压缩包
+        Compress-Archive -Path "release\windows\ASIN-OE-Opener.exe" -DestinationPath "release\windows\ASIN-OE-Opener-windows.zip" -Force
+        
+        # 列出发布文件
+        echo "Windows release files:"
+        Get-ChildItem -Path release\windows
+    
+    - name: Upload Windows artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: asin-oe-opener-windows
+        path: release/windows/
+        retention-days: 7
+
+  build-linux:
+    name: Build Linux Application
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build Linux Executable
+      run: |
+        echo "Building Linux executable..."
+        
+        # 构建单文件可执行文件
+        pyinstaller \
+          --name="ASIN-OE-Opener" \
+          --windowed \
+          --onefile \
+          --clean \
+          --noconfirm \
+          ASIN-OE-Opener.py
+        
+        echo "✅ Linux executable built successfully"
+    
+    - name: Verify Linux build
+      run: |
+        echo "Verifying Linux build..."
+        
+        if [ -f "dist/ASIN-OE-Opener" ]; then
+          echo "✅ Linux executable: dist/ASIN-OE-Opener"
+          file dist/ASIN-OE-Opener
+          chmod +x dist/ASIN-OE-Opener
+        else
+          echo "❌ Linux executable not found"
+          exit 1
+        fi
+    
+    - name: Package Linux artifacts
+      run: |
+        echo "Packaging Linux artifacts..."
+        
+        # 创建发布目录
+        mkdir -p release/linux
+        
+        # 复制可执行文件
+        cp dist/ASIN-OE-Opener release/linux/
+        
+        # 创建tar.gz压缩包
+        tar -czf release/linux/ASIN-OE-Opener-linux.tar.gz -C release/linux ASIN-OE-Opener
+        
+        # 列出发布文件
+        echo "Linux release files:"
+        ls -lh release/linux/
+    
+    - name: Upload Linux artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: asin-oe-opener-linux
+        path: release/linux/
+        retention-days: 7
+
+  create-release:
+    name: Create GitHub Release
+    needs: [build-macos, build-windows, build-linux]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Download macOS artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: asin-oe-opener-macos
+        path: release/macos
+    
+    - name: Download Windows artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: asin-oe-opener-windows
+        path: release/windows
+    
+    - name: Download Linux artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: asin-oe-opener-linux
+        path: release/linux
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          release/macos/ASIN-OE-Opener
+          release/macos/ASIN-OE-Opener.app.zip
+          release/macos/ASIN-OE-Opener.dmg
+          release/windows/ASIN-OE-Opener.exe
+          release/windows/ASIN-OE-Opener-windows.zip
+          release/linux/ASIN-OE-Opener
+          release/linux/ASIN-OE-Opener-linux.tar.gz
+        name: Release ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        body: |
+          # ASIN-OE-Opener 多平台版本
+          
+          ## 下载选项
+          
+          ### macOS
+          1. **单文件可执行文件** (`ASIN-OE-Opener`) - 直接运行的可执行文件
+          2. **应用程序包** (`ASIN-OE-Opener.app.zip`) - 标准的 macOS 应用程序
+          3. **DMG 安装包** (`ASIN-OE-Opener.dmg`) - 磁盘映像安装包
+          
+          ### Windows
+          1. **可执行文件** (`ASIN-OE-Opener.exe`) - Windows 可执行文件
+          2. **ZIP 压缩包** (`ASIN-OE-Opener-windows.zip`) - 包含可执行文件的压缩包
+          
+          ### Linux
+          1. **可执行文件** (`ASIN-OE-Opener`) - Linux 可执行文件
+          2. **tar.gz 压缩包** (`ASIN-OE-Opener-linux.tar.gz`) - 包含可执行文件的压缩包
+          
+          ## 系统要求
+          
+          ### macOS
+          - macOS 10.15 (Catalina) 或更高版本
+          - 支持 Intel 和 Apple Silicon (M 系列) Mac
+          
+          ### Windows
+          - Windows 10 或更高版本
+          - 需要安装 Microsoft Visual C++ Redistributable (如果未安装)
+          
+          ### Linux
+          - 大多数现代 Linux 发行版 (Ubuntu 20.04+, Fedora, etc.)
+          - 需要 glibc 2.31 或更高版本
+          
+          ## 使用说明
+          
+          ### macOS
+          1. **单文件版本**: 下载 `ASIN-OE-Opener`，在终端中运行 `chmod +x ASIN-OE-Opener` 然后 `./ASIN-OE-Opener`
+          2. **应用程序包**: 下载 `ASIN-OE-Opener.app.zip`，解压后双击 `ASIN-OE-Opener.app`
+          3. **DMG 版本**: 下载 `ASIN-OE-Opener.dmg`，双击挂载，将应用程序拖到 Applications 文件夹
+          
+          ### Windows
+          1. **可执行文件**: 下载 `ASIN-OE-Opener.exe`，双击运行
+          2. **ZIP 版本**: 下载 `ASIN-OE-Opener-windows.zip`，解压后运行 `ASIN-OE-Opener.exe`
+          
+          ### Linux
+          1. **可执行文件**: 下载 `ASIN-OE-Opener`，运行 `chmod +x ASIN-OE-Opener` 然后 `./ASIN-OE-Opener`
+          2. **tar.gz 版本**: 下载 `ASIN-OE-Opener-linux.tar.gz`，解压后运行 `./ASIN-OE-Opener`
+          
+          ## 注意事项
+          
+          - 首次运行可能需要系统权限（因为未签名）
+          - 在 macOS 上，可能需要右键点击并选择"打开"或在系统设置中允许运行来自未知开发者的应用程序
+          - 在 Windows 上，可能会显示"Windows 保护了你的电脑"警告，点击"更多信息"然后"仍要运行"
+          - 在 Linux 上，可能需要使用 `chmod +x` 命令添加执行权限
