@@ -47,6 +47,10 @@ jobs:
           ASIN-OE-Opener.py
         
         echo "✅ Universal binary built successfully"
+        
+        # 保存单文件可执行文件到临时位置
+        mkdir -p temp_build
+        cp dist/ASIN-OE-Opener temp_build/
     
     - name: Build .app Bundle
       run: |
@@ -63,6 +67,9 @@ jobs:
           ASIN-OE-Opener.py
         
         echo "✅ .app bundle built successfully"
+        
+        # 恢复单文件可执行文件
+        cp temp_build/ASIN-OE-Opener dist/
     
     - name: Verify builds
       run: |
