@@ -21,6 +21,10 @@ def open_links():
     # 获取OE prefix
     oe_prefix = prefix_var.get().strip()
 
+    # 获取间隔时间
+    interval_time = interval_var.get()
+    print(f"使用的间隔时间: {interval_time}秒")
+
     # 获取和判断分隔符
     splitter = splitter_var.get()
     splitter_flag = False
@@ -69,7 +73,7 @@ def open_links():
         if stop_opening:
             break
         if item:
-            time.sleep(0.6)
+            time.sleep(interval_time)
             print(f"\n处理item: {item}")
 
             # 初始化变量
@@ -225,6 +229,31 @@ prefix_entry.pack(pady=5)
 desc_only_var = tk.BooleanVar()
 desc_only_check = tk.Checkbutton(root, text="只打开描述页", variable=desc_only_var)
 desc_only_check.pack(pady=5)
+
+# 创建间隔时间调整控件
+interval_var = tk.DoubleVar(value=0.8)
+interval_label = tk.Label(root, text="打开间隔时间(秒):")
+interval_label.pack()
+interval_frame = tk.Frame(root)
+interval_frame.pack(pady=5)
+
+interval_spinbox = tk.Spinbox(
+    interval_frame,
+    from_=0.1,
+    to=10.0,
+    increment=0.1,
+    textvariable=interval_var,
+    width=10
+)
+interval_spinbox.pack(side=tk.LEFT, padx=(0, 5))
+
+interval_value_label = tk.Label(interval_frame, text=f"当前: {interval_var.get()}秒")
+interval_value_label.pack(side=tk.LEFT)
+
+def update_interval_label(*args):
+    interval_value_label.config(text=f"当前: {interval_var.get():.1f}秒")
+
+interval_var.trace("w", update_interval_label)
 
 # 创建按钮
 open_button = tk.Button(
