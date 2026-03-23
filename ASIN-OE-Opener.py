@@ -132,7 +132,7 @@ def open_links():
             else:
                 search_item = f"{oe_prefix} {item}" if oe_prefix else item
                 if platform == "亚马逊":
-                    url = f"{site_prefix[selected_site]}/s?k={search_item}&i=automotive"
+                    url = f"{site_prefix[selected_site]}/s?k={search_item}&i=automotive&ref=nb_sb_ss_ts-doa-p_1_6&crid=TEST123"
                 else:
                     if selected_site in ebay_prefix:
                         url = f'{ebay_prefix[selected_site]["base"]}{ebay_prefix[selected_site]["search"].format(query=search_item)}'
@@ -243,15 +243,17 @@ interval_spinbox = tk.Spinbox(
     to=10.0,
     increment=0.1,
     textvariable=interval_var,
-    width=10
+    width=10,
 )
 interval_spinbox.pack(side=tk.LEFT, padx=(0, 5))
 
 interval_value_label = tk.Label(interval_frame, text=f"当前: {interval_var.get()}秒")
 interval_value_label.pack(side=tk.LEFT)
 
+
 def update_interval_label(*args):
     interval_value_label.config(text=f"当前: {interval_var.get():.1f}秒")
+
 
 interval_var.trace("w", update_interval_label)
 
